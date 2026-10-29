@@ -1,49 +1,50 @@
-# Submission evidence checklist
+# Completed assignment evidence
 
-## Live work still required
+- [x] Portfolio personalized for Maha Ishaq, fa23-bai-037, with required Contact section.
+- [x] Public repository: https://github.com/MahaIshaq04/devops-a2-fa23-bai-037
+- [x] At least five meaningful setup commits plus feature and fix commits.
+- [x] feature-endpoint pushed, PR #1 opened, CI passed, and PR merged.
+- [x] nginx image built and container page served at http://localhost:8080.
+- [x] Browser screenshot includes the actual address bar.
+- [x] mahaishaq04/devops-a2:manual pushed to Docker Hub.
+- [x] GitHub secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN configured with an access token.
+- [x] Passing main workflow published latest.
+- [x] Deliberate missing-title branch/PR produced a retained failed run.
+- [x] Title restored; repair run passed; demo PR #2 closed without merging.
+- [x] Active application/json webhook configured for push and pull_request.
+- [x] Actual ping, push, and pull_request opened deliveries captured.
+- [x] Six actual screenshots and a three-page submission PDF generated locally.
 
-- [ ] Fill personal details and choose the correct extra section.
-- [ ] Create public GitHub repository `devops-a2-<roll-number>`.
-- [ ] Make at least five meaningful commits using your own Git identity.
-- [ ] Push `feature-endpoint`, open its PR, and merge it yourself.
-- [ ] Build and run the image locally; screenshot browser at http://localhost:8080.
-- [ ] Push `<dockerhub-username>/devops-a2:manual`.
-- [ ] Configure the two GitHub Actions secrets using a Docker Hub access token.
-- [ ] Keep a deliberate failed PR run and a later passed run.
-- [ ] Verify successful main run publishes `latest`.
-- [ ] Screenshot Docker Hub showing `manual` and `latest`.
-- [ ] Record actual webhook deliveries below.
-- [ ] Write report in your own words, add screenshots, export one submission PDF.
+## Actual observed webhook values
 
-## Webhook setup and observations
+| Event | X-GitHub-Event | ref (push only) | Observation |
+| --- | --- | --- | --- |
+| Ping | ping | N/A | GitHub sent a ping after webhook creation. |
+| Push | push | refs/heads/feature-endpoint | Pushing the feature branch produced a JSON delivery. |
+| Pull request opened | pull_request | N/A | The JSON action field was opened. |
 
-1. Open https://webhook.site and copy your unique receiver URL. Treat that URL
-   and captured payloads as private; do not commit them to the public repository.
-2. In GitHub repository Settings → Webhooks → Add webhook, set that URL,
-   content type `application/json`, and select **Pushes** and **Pull requests**.
-   Keep the webhook active. GitHub sends a ping when the hook is created.
-3. Push a commit, then open a new PR. Inspect each request at webhook.site and
-   in GitHub's Recent Deliveries. Record header names and exact observed values.
-4. Use the actual `X-GitHub-Event` header, top-level `ref` for a push, and
-   `action` for a PR. A PR-opened delivery uses event `pull_request` plus action
-   `opened`; the event header does not include the word `opened`.
-5. Fill the report table from these deliveries. Ping and PR top-level push `ref`
-   are not applicable; do not substitute the PR's nested branch name.
+A webhook sends an event payload to an external receiver. GitHub Actions runs
+configured jobs that check the page, build/test the container, and conditionally
+publish the image. These deliveries were observed, not inferred from examples.
 
-The report needs six screenshots: history, merged PR, Docker Hub tags, failed
-Actions run, passed Actions run, and container-served page with address bar.
-Keep original images in the ignored `evidence/` directory. Avoid capturing tokens.
+The private receiver URL, raw requests, and run metadata are saved in the ignored
+`evidence/` directory. Do not add that directory to the public repository.
+The PDF's first page contains direct repository and workflow-run links.
 
-## Problems observed during scaffolding
+## Verified real problem
 
-Docker's initial local probe reported:
+The feature-PR container smoke test failed with:
 
 ```text
-failed to connect to the docker API at npipe:////./pipe/docker_engine
-The system cannot find the file specified.
+curl: (56) Recv failure: Connection reset by peer
 ```
 
-The engine was unavailable. Starting Docker Desktop is the next diagnostic step;
-a successful build/run has **not** yet verified the fix. Only describe this as
-solved in your report after you actually verify it. GitHub CLI was also absent,
-and this directory was initially not a Git repository.
+nginx had not finished starting. Changing curl's readiness retry to
+`--retry-all-errors`, bounded by `--retry-max-time 30`, fixed it. The next feature
+PR run passed and the merged main run successfully published latest.
+
+## Submission
+
+Open `submission.pdf`, review the report wording, and submit that single PDF.
+Keep the GitHub repository public until marks are given. Full-resolution original
+screenshots are kept locally in `evidence/` for inspection and regeneration.

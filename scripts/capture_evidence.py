@@ -83,7 +83,7 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
             headless=False, args=['--window-size=1440,1100', '--force-device-scale-factor=1'])
-        context = browser.new_context(viewport={'width': 1400, 'height': 960}, device_scale_factor=1)
+        context = browser.new_context(viewport={'width': 900, 'height': 650})
         page = context.new_page()
         try:
             response = page.goto('http://localhost:8080/', wait_until='networkidle', timeout=45000)
@@ -93,12 +93,17 @@ def main():
             page.wait_for_timeout(1500)
             capture_browser_window('Maha Ishaq', evidence / 'container-browser.png')
             print('Captured container page and real browser window with address bar.')
+            page.set_viewport_size({'width': 1400, 'height': 1100})
             for name, url in targets.items():
                 if not url:
                     continue
                 try:
                     response = page.goto(url, wait_until='domcontentloaded', timeout=60000)
                     page.wait_for_timeout(4000)
+                    if name == 'dockerhub-tags':
+                        reject = page.get_by_role('button', name='Reject All', exact=True)
+                        if reject.count() and reject.is_visible():
+                            reject.click()
                     page.screenshot(path=str(evidence / (name + '.png')), full_page=False)
                     print(name, 'HTTP', response.status, page.title())
                 except Exception as exc:

@@ -99,6 +99,10 @@ def main(command):
     elif command == 'status':
         runs = api('/actions/runs?per_page=30')['workflow_runs']
         state['runs'] = [{k: r.get(k) for k in ('id', 'html_url', 'head_branch', 'head_sha', 'event', 'status', 'conclusion', 'run_number')} for r in runs]
+        successful = [r for r in runs if r['head_branch'] == 'main' and r['event'] == 'push' and r['conclusion'] == 'success']
+        if successful:
+            state['successful_main_run_url'] = successful[0]['html_url']
+            state['successful_main_run_id'] = successful[0]['id']
         save(state)
         for r in state['runs']:
             print(r['id'], r['head_branch'], r['event'], r['status'], r['conclusion'], r['html_url'])
