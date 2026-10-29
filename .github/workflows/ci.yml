@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v7
+      - name: Check portfolio requirements
+        run: python3 scripts/check_page.py
+      - name: Test page validation rules
+        run: python3 -m unittest discover -s tests -v
+      - name: Build image
+        run: docker build -t devops-a2:ci .
+      - name: Smoke test the container
+        run: |
+          docker run -d --name page -p 8080:80 devops-a2:ci
+          trap 'docker logs page; docker rm -f page' EXIT
+          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://localhost:8080/ -o /tmp/served.html
+          cmp index.html /tmp/served.html
+          curl --fail http://localhost:8080/style.css -o /tmp/served.css
+          cmp style.css /tmp/served.css
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Publish verified image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          test -n "$DOCKERHUB_USERNAME"
+          docker tag devops-a2:ci "$DOCKERHUB_USERNAME/devops-a2:latest"
+          docker push "$DOCKERHUB_USERNAME/devops-a2:latest"
