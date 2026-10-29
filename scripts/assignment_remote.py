@@ -141,13 +141,56 @@ def main(command):
                 print(json.dumps(item))
         state['webhook_observations'] = summary
         save(state)
+    elif command == 'demo-open':
+        branch = 'demonstrate-failed-check'
+        if not state.get('demo_branch'):
+            head = api('/git/ref/heads/main')['object']['sha']
+            api('/git/refs', 'POST', {'ref': 'refs/heads/' + branch, 'sha': head})
+            state['demo_branch'] = branch
+            save(state)
+            content = api('/contents/index.html?ref=' + branch)
+            source = base64.b64decode(content['content']).decode()
+            import re
+            source = re.sub(r'\s*<title>.*?</title>', '', source)
+            api('/contents/index.html', 'PUT', {'message': 'test: demonstrate CI rejecting missing title',
+                'branch': branch, 'sha': content['sha'],
+                'content': base64.b64encode(source.encode()).decode()})
+        if not state.get('demo_pr'):
+            pr = api('/pulls', 'POST', {'title': 'Demonstrate missing-title CI failure (do not merge)',
+                'head': branch, 'base': 'main',
+                'body': 'Intentionally removes the page title to prove the custom check rejects an invalid page. The title will be restored after the failed run is recorded; this PR will be closed without merging.'})
+            state['demo_pr'] = pr['number']
+            state['demo_pr_url'] = pr['html_url']
+            save(state)
+        print('Demonstration PR:', state['demo_pr_url'])
+    elif command == 'demo-fix':
+        runs = api('/actions/runs?branch=demonstrate-failed-check&per_page=20')['workflow_runs']
+        failed = [r for r in runs if r['conclusion'] == 'failure']
+        if not failed:
+            raise RuntimeError('Wait for the deliberate failed run before restoring the title')
+        state['deliberate_failed_run_url'] = failed[0]['html_url']
+        state['deliberate_failed_run_id'] = failed[0]['id']
+        original = api('/contents/index.html?ref=main')
+        current = api('/contents/index.html?ref=demonstrate-failed-check')
+        if original['sha'] != current['sha']:
+            api('/contents/index.html', 'PUT', {'message': 'fix: restore page title after failed CI demonstration',
+                'branch': 'demonstrate-failed-check', 'sha': current['sha'], 'content': original['content']})
+        save(state)
+        print('Retained failed run:', state['deliberate_failed_run_url'])
+    elif command == 'demo-close':
+        pr = api('/pulls/' + str(state['demo_pr']))
+        checks = api('/commits/' + pr['head']['sha'] + '/check-runs')['check_runs']
+        if not checks or any(c['conclusion'] != 'success' for c in checks):
+            raise RuntimeError('Wait for the restored-title run to pass before closing the demo PR')
+        api('/pulls/' + str(state['demo_pr']), 'PATCH', {'state': 'closed'})
+        print('Closed demonstration PR without merging.')
     else:
         raise ValueError('Unknown operation')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['secrets', 'hook', 'pr', 'status', 'merge', 'deliveries'])
+    parser.add_argument('command', choices=['secrets', 'hook', 'pr', 'status', 'merge', 'deliveries', 'demo-open', 'demo-fix', 'demo-close'])
     try:
         main(parser.parse_args().command)
     except urllib.error.HTTPError as exc:
