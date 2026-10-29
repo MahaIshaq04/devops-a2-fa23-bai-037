@@ -6,11 +6,17 @@ to `main` publishes the verified image to Docker Hub as `latest`.
 
 ## Current status
 
-This directory originally contained only `Assignment #2 (1).pdf`. The scaffold
-is implemented, but is **not ready to submit** until personalized and the live
-GitHub, Docker Hub, webhook, and report evidence steps below are completed.
-No remote repository, commits, workflow runs, image uploads, or webhook deliveries
-are claimed by this scaffold.
+This directory originally contained only `Assignment #2 (1).pdf`. The portfolio
+is personalized for Maha Ishaq, roll `fa23-bai-037`, with the required Contact
+section on `feature-endpoint`. Five setup commits are on `main`; the Contact
+section and latest personal details are still uncommitted on the feature branch.
+The Docker Hub username is `mahaishaq04`. This is **not ready to submit**
+until the live GitHub, Docker Hub, webhook, and report evidence steps are complete.
+No remote repository, workflow runs, image uploads, or webhook deliveries are claimed.
+
+The commands below describe the complete process from an empty directory.
+**Do not recreate the existing commits.** To continue this checkout, push `main`
+and `feature-endpoint` to your new public repository, then open and merge the PR.
 
 ## Personalize first
 
@@ -48,7 +54,7 @@ git add scripts .github
 git commit -m "ci: validate portfolio and publish verified Docker image"
 git add docs
 git commit -m "docs: add webhook evidence and report templates"
-git remote add origin https://github.com/YOUR_GITHUB_USERNAME/devops-a2-YOUR_ROLL_NUMBER.git
+git remote add origin https://github.com/MahaIshaq04/devops-a2-fa23-bai-037.git
 git push -u origin main
 git switch -c feature-endpoint
 # Now add your roll-number-specific extra section to index.html.
@@ -67,16 +73,16 @@ PR with a local merge: the assignment requires an actual GitHub PR.
 ## Docker (Part B)
 
 Start Docker Desktop with Linux containers and wait for the engine to be ready.
-Replace `YOUR_DOCKERHUB_USERNAME` below. Create a Docker Hub repository named
+Your Docker Hub username is `mahaishaq04`. Create a Docker Hub repository named
 `devops-a2`. Log in interactively using an access token, never commit a token.
 
 ```powershell
 docker info
-docker build -t YOUR_DOCKERHUB_USERNAME/devops-a2:manual .
-docker run -d -p 8080:80 --name page YOUR_DOCKERHUB_USERNAME/devops-a2:manual
+docker build -t mahaishaq04/devops-a2:manual .
+docker run -d -p 8080:80 --name page mahaishaq04/devops-a2:manual
 Invoke-WebRequest http://localhost:8080/ -UseBasicParsing
-docker login --username YOUR_DOCKERHUB_USERNAME
-docker push YOUR_DOCKERHUB_USERNAME/devops-a2:manual
+docker login --username mahaishaq04
+docker push mahaishaq04/devops-a2:manual
 ```
 
 Open **http://localhost:8080** in your browser and screenshot it with the address
